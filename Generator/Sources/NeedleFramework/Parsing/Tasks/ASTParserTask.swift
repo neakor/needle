@@ -48,7 +48,7 @@ class ASTParserTask: AbstractTask<DependencyGraphNode> {
         for substructure in substructures {
             if substructure.isComponent {
                 let dependencyProtocolName = substructure.dependencyProtocolName(for: "Component")
-                components.append(ASTComponent(name: substructure.name, dependencyProtocolName: dependencyProtocolName, properties: substructure.properties, expressionCallTypeNames: substructure.uniqueExpressionCallNames))
+                components.append(ASTComponent(name: substructure.name, dependencyProtocolName: dependencyProtocolName, properties: substructure.properties, expressionCallTypeNames: substructure.uniqueExpressionCallNames, isPresidioComponentAsFakeRoot: substructure.isPresidioComponent))
             } else if substructure.isDependencyProtocol {
                 dependencies.append(Dependency(name: substructure.name, properties: substructure.properties))
             }

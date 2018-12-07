@@ -27,6 +27,8 @@ struct Component: Equatable {
     let parents : [Component]
     /// The dependency protocol data model.
     let dependency: Dependency
+    /// If this component is a fake Needle root using `Presidio.Component`.
+    let isPresidioComponentAsFakeRoot: Bool
 }
 
 /// A intermediate data model representing a component parsed straight out of
@@ -43,6 +45,8 @@ class ASTComponent {
     let properties: [Property]
     /// A list of expression call type names.
     let expressionCallTypeNames: [String]
+    /// If this component is a fake Needle root using `Presidio.Component`.
+    let isPresidioComponentAsFakeRoot: Bool
     /// The mutable list of parents.
     var parents = [ASTComponent]()
     /// The referenced dependency protocol data model.
@@ -53,14 +57,15 @@ class ASTComponent {
         let parentValues = parents.map { (parent: ASTComponent) -> Component in
             parent.valueType
         }
-        return Component(name: name, properties: properties, parents: parentValues, dependency: dependencyProtocol!)
+        return Component(name: name, properties: properties, parents: parentValues, dependency: dependencyProtocol!, isPresidioComponentAsFakeRoot: isPresidioComponentAsFakeRoot)
     }
 
     /// Initializer.
-    init(name: String, dependencyProtocolName: String, properties: [Property], expressionCallTypeNames: [String]) {
+    init(name: String, dependencyProtocolName: String, properties: [Property], expressionCallTypeNames: [String], isPresidioComponentAsFakeRoot: Bool) {
         self.name = name
         self.dependencyProtocolName = dependencyProtocolName
         self.properties = properties
         self.expressionCallTypeNames = expressionCallTypeNames
+        self.isPresidioComponentAsFakeRoot = isPresidioComponentAsFakeRoot
     }
 }
