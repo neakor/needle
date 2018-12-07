@@ -34,6 +34,11 @@ class DependencyProviderDeclarerTask: AbstractTask<[DependencyProvider]> {
     ///
     /// - returns: The list of `DependencyProvider`.
     override func execute() -> [DependencyProvider] {
+        // Avoid declaring provider for fake roots.
+        if component.parents.isEmpty && component.name != "AppComponent" {
+            return []
+        }
+
         return ancestorPaths(for: component)
             .map { (path: [Component]) -> DependencyProvider in
                 return DependencyProvider(path: path, dependency: component.dependency)

@@ -37,7 +37,7 @@ extension Structure {
 
     /// Check if this structure represents a `Component` subclass.
     var isComponent: Bool {
-        let regex = Regex("^(\(needleModuleName).)?Component *<(.+)>")
+        let regex = Regex("^(Presidio.|\(needleModuleName).)Component *<(.+)>")
         return inheritedTypes.contains { (type: String) -> Bool in
             regex.firstMatch(in: type) != nil
         }
@@ -45,7 +45,7 @@ extension Structure {
 
     /// Check if this structure represents a `Dependency` protocol.
     var isDependencyProtocol: Bool {
-        return inheritedTypes.contains("Dependency") || inheritedTypes.contains("\(needleModuleName).Dependency")
+        return inheritedTypes.contains("Dependency") || inheritedTypes.contains("\(needleModuleName).Dependency") || inheritedTypes.contains("Presidio.Dependency")
     }
 
     /// The type name of this structure.
@@ -59,7 +59,7 @@ extension Structure {
     /// - parameter componentType: The type name of the component.
     /// - returns: The dependency protocol type name.
     func dependencyProtocolName(for componentType: String) -> String {
-        let regex = Regex("^(\(needleModuleName).)?\(componentType) *<")
+        let regex = Regex("^(Presidio.|\(needleModuleName).)\(componentType) *<")
         let result = inheritedTypes
             .compactMap { (type: String) -> String? in
                 if regex.firstMatch(in: type) != nil {
