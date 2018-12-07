@@ -60,6 +60,15 @@ class DependencyProviderDeclarerTask: AbstractTask<[DependencyProvider]> {
                         return path + [component]
                     }
                 allPaths.append(contentsOf: parentAncestorPaths)
+                // If the parent is a fake root `Presidio.Component`, this parent
+                // can be instantiated anywhere. Therefore, we need to create a
+                // path with this parent as the root.
+                if parent.isPresidioComponentAsFakeRoot {
+                    let additionalPath = [parent, component]
+                    if !allPaths.contains(additionalPath) {
+                        allPaths.append(additionalPath)
+                    }
+                }
             }
             return allPaths
         }

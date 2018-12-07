@@ -53,11 +53,11 @@ class PluginizedASTParserTask: AbstractTask<PluginizedDependencyGraphNode> {
         for substructure in substructures {
             if substructure.isPluginizedComponent {
                 let (dependencyProtocolName, pluginExtensionName, nonCoreComponentName) = substructure.pluginizedGenerics
-                let component = ASTComponent(name: substructure.name, dependencyProtocolName: dependencyProtocolName, properties: substructure.properties, expressionCallTypeNames: substructure.uniqueExpressionCallNames)
+                let component = ASTComponent(name: substructure.name, dependencyProtocolName: dependencyProtocolName, properties: substructure.properties, expressionCallTypeNames: substructure.uniqueExpressionCallNames, isPresidioComponentAsFakeRoot: substructure.isPresidioComponent)
                 pluginizedComponents.append(PluginizedASTComponent(data: component, pluginExtensionType: pluginExtensionName, nonCoreComponentType: nonCoreComponentName))
             } else if substructure.isNonCoreComponent {
                 let dependencyProtocolName = substructure.dependencyProtocolName(for: "NonCoreComponent")
-                let component = ASTComponent(name: substructure.name, dependencyProtocolName: dependencyProtocolName, properties: substructure.properties, expressionCallTypeNames: substructure.uniqueExpressionCallNames)
+                let component = ASTComponent(name: substructure.name, dependencyProtocolName: dependencyProtocolName, properties: substructure.properties, expressionCallTypeNames: substructure.uniqueExpressionCallNames, isPresidioComponentAsFakeRoot: substructure.isPresidioComponent)
                 nonCoreComponents.append(component)
             } else if substructure.isPluginExtension {
                 pluginExtensions.append(PluginExtension(name: substructure.name, properties: substructure.properties))
@@ -71,6 +71,13 @@ class PluginizedASTParserTask: AbstractTask<PluginizedDependencyGraphNode> {
 // MARK: - SourceKit AST Parsing Utilities
 
 extension Structure {
+
+    var isPresidioComponent: Bool {
+        let regex = Regex("^Presidio.Component *<(.+)>")
+        return inheritedTypes.contains { (type: String) -> Bool in
+            regex.firstMatch(in: type) != nil
+        }
+    }
 
     var isPluginizedComponent: Bool {
         let regex = Regex("^(\(needleModuleName).)?PluginizedComponent *<(.+)>")
