@@ -31,53 +31,64 @@ class DependencyGraphParserTests: AbstractParserTests {
         var producerCount = 0
         var parserCount = 0
         executor.executionHandler = { (task: Task, result: Any) in
-            if task is FileFilterTask {
+            if task is DeclarationsFilterTask {
                 filterCount += 1
             } else if task is ASTProducerTask {
                 producerCount += 1
-            } else if task is ASTParserTask {
+            } else if task is DeclarationsParserTask {
                 parserCount += 1
-            } else {
-                XCTFail()
             }
         }
 
         XCTAssertEqual(executor.executeCallCount, 0)
 
         do {
-            _ = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["ha", "yay", "blah"], using: executor, withTimeout: 10)
+            _ = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["InvalidInits1", "InvalidInits2", "InvalidInits3", "InvalidInits4"], using: executor, withTimeout: 10)
         } catch {
             XCTFail("\(error)")
         }
 
-        XCTAssertEqual(executor.executeCallCount, files.count)
         XCTAssertEqual(filterCount, files.count)
-        XCTAssertEqual(producerCount, 6)
-        XCTAssertEqual(parserCount, 6)
+        XCTAssertEqual(producerCount, 7)
+        XCTAssertEqual(parserCount, 7)
         XCTAssertEqual(producerCount, parserCount)
     }
 
     func test_parse_withTaskCompleteion_verifyResults() {
         let parser = DependencyGraphParser()
         let fixturesURL = fixtureDirUrl()
-        let enumerator = FileManager.default.enumerator(at: fixturesURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles], errorHandler: nil)
-        let files = enumerator!.allObjects as! [URL]
         let executor = MockSequenceExecutor()
 
         XCTAssertEqual(executor.executeCallCount, 0)
 
         do {
-            let (components, imports) = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["ha", "yay", "blah"], using: executor, withTimeout: 10)
+            let (components, imports) = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["InvalidInits1", "InvalidInits2", "InvalidInits3", "InvalidInits4"], using: executor, withTimeout: 10)
             let childComponent = components.filter { $0.name == "MyChildComponent" }.first!
             let parentComponent = components.filter { $0.name == "MyComponent" }.first!
             XCTAssertTrue(childComponent.parents.first! == parentComponent)
-            XCTAssertEqual(components.count, 7)
+            XCTAssertEqual(components.count, 9)
             XCTAssertEqual(imports, ["import Foundation", "import RIBs", "import RxSwift", "import UIKit", "import Utility"])
         } catch {
             XCTFail("\(error)")
         }
+    }
 
-        XCTAssertEqual(executor.executeCallCount, files.count)
+    func test_parse_withInvalidComponentInits_verifyError() {
+        let parser = DependencyGraphParser()
+        let fixturesURL = fixtureDirUrl()
+        let executor = MockSequenceExecutor()
+
+        do {
+            _ = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: [], using: executor, withTimeout: 10)
+            XCTFail()
+        } catch {
+            switch error {
+            case GeneratorError.withMessage(let message):
+                XCTAssertTrue(message.contains("is instantiated incorrectly. All components must be instantiated by parent components, by passing `self` as the argument to the parent parameter."))
+            default:
+                XCTFail()
+            }
+        }
     }
 }
 
@@ -89,13 +100,13 @@ class MockSequenceExecutor: SequenceExecutor {
     func executeSequence<SequenceResultType>(from initialTask: Task, with execution: @escaping (Task, Any) -> SequenceExecution<SequenceResultType>) -> SequenceExecutionHandle<SequenceResultType> {
         executeCallCount += 1
 
-        var result = initialTask.typeErasedExecute()
+        var result = try! initialTask.typeErasedExecute()
         var executionResult = execution(initialTask, result)
         executionHandler?(initialTask, result)
         while true {
             switch executionResult {
             case .continueSequence(let task):
-                result = task.typeErasedExecute()
+                result = try! task.typeErasedExecute()
                 executionResult = execution(task, result)
                 executionHandler?(task, result)
             case .endOfSequence(let finalResult):

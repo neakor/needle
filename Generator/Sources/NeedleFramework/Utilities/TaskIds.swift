@@ -19,15 +19,18 @@ import Foundation
 /// A list of IDs of task types used in the generator.
 enum TaskIds: Int {
     /// File filtering task IDs.
-    case fileFilterTask = 1
-    case pluginizedFileFilterTask = 2
+    case declarationsFilterTask = 1
+    case pluginizedDeclarationsFilterTask = 2
+    case componentExtensionsFilterTask = 13
+    case componentInitsFilterTask = 14
     /// File content loading task ID.
     case fileContentLoaderTask = 3
     /// AST producing task ID.
     case astProducerTask = 4
     /// AST parsing task IDs.
-    case astParserTask = 5
-    case pluginizedASTParserTask = 6
+    case declarationsParserTask = 5
+    case componentExtenionsParserTask = 15
+    case pluginizedDeclarationsParserTask = 6
     /// Dependency provider declaring task ID.
     case dependencyProviderDeclarerTask = 7
     /// Dependency provider content task IDs.

@@ -42,9 +42,9 @@ class ASTComponent {
     /// The name of the component's dependency protocol.
     let dependencyProtocolName: String
     /// A list of properties this component instantiates, thereby provides.
-    let properties: [Property]
+    var properties: [Property]
     /// A list of expression call type names.
-    let expressionCallTypeNames: [String]
+    var expressionCallTypeNames: [String]
     /// If this component is a fake Needle root using `Presidio.Component`.
     let isPresidioComponentAsFakeRoot: Bool
     /// The mutable list of parents.
@@ -68,4 +68,17 @@ class ASTComponent {
         self.expressionCallTypeNames = expressionCallTypeNames
         self.isPresidioComponentAsFakeRoot = isPresidioComponentAsFakeRoot
     }
+}
+
+/// A intermediate data model representing an extension of a component parsed
+/// straight out of the source file AST. This data model does not represent a
+/// complete component scope. Instead it is linked with the `ASTComponent` to
+/// for a complete representation.
+struct ASTComponentExtension {
+    /// The name of the component.
+    let name: String
+    /// A list of properties this component instantiates, and thereby provides.
+    let properties: [Property]
+    /// A list of expression call type names.
+    let expressionCallTypeNames: [String]
 }

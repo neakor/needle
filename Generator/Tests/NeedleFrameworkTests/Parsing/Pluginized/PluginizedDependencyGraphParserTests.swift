@@ -31,53 +31,64 @@ class PluginizedDependencyGraphParserTests: AbstractPluginizedParserTests {
         var producerCount = 0
         var parserCount = 0
         executor.executionHandler = { (task: Task, result: Any) in
-            if task is PluginizedFileFilterTask {
+            if task is PluginizedDeclarationsFilterTask {
                 filterCount += 1
             } else if task is ASTProducerTask {
                 producerCount += 1
-            } else if task is PluginizedASTParserTask {
+            } else if task is PluginizedDeclarationsParserTask {
                 parserCount += 1
-            } else {
-                XCTFail()
             }
         }
 
         XCTAssertEqual(executor.executeCallCount, 0)
 
         do {
-            _ = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["ha", "yay", "blah"], using: executor, withTimeout: 10)
+            _ = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["InvalidInits1", "InvalidInits2", "InvalidInits3", "InvalidInits4"], using: executor, withTimeout: 10)
         } catch {
             XCTFail("\(error)")
         }
 
-        XCTAssertEqual(executor.executeCallCount, files.count)
         XCTAssertEqual(filterCount, files.count)
-        XCTAssertEqual(producerCount, 10)
-        XCTAssertEqual(parserCount, 10)
+        XCTAssertEqual(producerCount, 12)
+        XCTAssertEqual(parserCount, 12)
         XCTAssertEqual(producerCount, parserCount)
     }
 
     func test_parse_withTaskCompleteion_verifyResults() {
         let parser = PluginizedDependencyGraphParser()
         let fixturesURL = fixtureDirUrl()
-        let enumerator = FileManager.default.enumerator(at: fixturesURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles], errorHandler: nil)
-        let files = enumerator!.allObjects as! [URL]
         let executor = MockSequenceExecutor()
 
         XCTAssertEqual(executor.executeCallCount, 0)
 
         do {
-            let (components, pluginizedComponents, imports) = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["ha", "yay", "blah"], using: executor, withTimeout: 10)
+            let (components, pluginizedComponents, imports) = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: ["InvalidInits1", "InvalidInits2", "InvalidInits3", "InvalidInits4"], using: executor, withTimeout: 10)
             let childComponent = components.filter { $0.name == "MyChildComponent" }.first!
             let parentComponent = components.filter { $0.name == "MyComponent" }.first!
             XCTAssertTrue(childComponent.parents.first! == parentComponent)
-            XCTAssertEqual(components.count, 11)
+            XCTAssertEqual(components.count, 13)
             XCTAssertEqual(pluginizedComponents.count, 3)
-            XCTAssertEqual(imports, ["import Foundation", "import NeedleFoundation", "import NeedleFoundationExtension", "import RIBs", "import RxSwift", "import ScoreSheet", "import UIKit", "import Utility"])
+            XCTAssertEqual(imports, ["import Foundation", "import NeedleFoundation", "import RIBs", "import RxSwift", "import ScoreSheet", "import UIKit", "import Utility"])
         } catch {
             XCTFail("\(error)")
         }
+    }
 
-        XCTAssertEqual(executor.executeCallCount, files.count)
+    func test_parse_withInvalidComponentInits_verifyError() {
+        let parser = PluginizedDependencyGraphParser()
+        let fixturesURL = fixtureDirUrl()
+        let executor = MockSequenceExecutor()
+
+        do {
+            _ = try parser.parse(from: [fixturesURL], withSourcesListFormat: nil, excludingFilesEndingWith: [], using: executor, withTimeout: 10)
+            XCTFail()
+        } catch {
+            switch error {
+            case GeneratorError.withMessage(let message):
+                XCTAssertTrue(message.contains("is instantiated incorrectly. All components must be instantiated by parent components, by passing `self` as the argument to the parent parameter."))
+            default:
+                XCTFail()
+            }
+        }
     }
 }
